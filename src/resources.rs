@@ -70,14 +70,15 @@ impl CellBoard {
         let mut delta = vec![];
         for row in 0..self.height {
             for col in 0..self.width {
+                let pos = CellPosition(row, col);
                 let n_alive_neighbours: usize = self
-                    .neighbours(CellPosition(row, col))
+                    .neighbours(pos)
                     .into_iter()
                     .map(|pos| if self.alive(pos) { 1 } else { 0 })
                     .sum();
-                let can_live = self.alive(CellPosition(row, col))
-                    && (n_alive_neighbours == 2 || n_alive_neighbours == 3);
-                let can_revive = !self.alive(CellPosition(row, col)) && n_alive_neighbours == 3;
+                let can_live =
+                    self.alive(pos) && (n_alive_neighbours == 2 || n_alive_neighbours == 3);
+                let can_revive = !self.alive(pos) && n_alive_neighbours == 3;
 
                 // RULES (https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life#Rules)
                 // 1. Any live cell with two or three live neighbours survives.
@@ -91,7 +92,7 @@ impl CellBoard {
                 };
 
                 if self.state[row * self.width + col] != new_cell_state {
-                    delta.push((CellPosition(row, col), new_cell_state));
+                    delta.push((pos, new_cell_state));
                 }
             }
         }
