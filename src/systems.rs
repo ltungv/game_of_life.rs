@@ -6,9 +6,9 @@ use bevy::prelude::*;
 
 pub fn life_setup(
     mut commands: Commands,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     mut cell_entities: ResMut<CellEntityMap>,
     mut color_handles: ResMut<ColorHandleMap>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
     board: Res<CellBoard>,
     cell_size: Res<CellSize>,
     window: Res<WindowDescriptor>,
@@ -18,9 +18,9 @@ pub fn life_setup(
         materials.add(Color::rgb_u8(255, 255, 255).into()),
     );
 
-    // Camera
+    // Camera entity
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-    // Background
+    // Background entity
     commands.spawn_bundle(SpriteBundle {
         material: materials.add(Color::rgb_u8(0, 0, 0).into()),
         sprite: Sprite::new(Vec2::new(window.width, window.height)),
@@ -36,6 +36,7 @@ pub fn life_setup(
                 let y =
                     (window.width / 2.0) - (row as f32 * cell_size.height + cell_size.height / 2.0);
 
+                // Cell entity
                 let cell_new = commands
                     .spawn_bundle(SpriteBundle {
                         material: color_handles.0.get("white").unwrap().clone(),
@@ -50,7 +51,7 @@ pub fn life_setup(
     }
 }
 
-pub fn cell_life_cycle(
+pub fn apply_life_cycle_rules(
     mut cycle_events: EventWriter<BoardCycleEvent>,
     mut board: ResMut<CellBoard>,
     mut cycle_timer: ResMut<CycleTimer>,
@@ -63,8 +64,8 @@ pub fn cell_life_cycle(
                 let n_alive_neighbours: usize = board
                     .neighbours(pos)
                     .into_iter()
-                    .map(|p| if board.alive(p) { 1 } else { 0 })
-                    .sum();
+                    .filter(|p| board.alive(*p))
+                    .count();
 
                 // RULES (https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life#Rules)
                 // 1. Any live cell with two or three live neighbours survives.
@@ -93,12 +94,12 @@ pub fn cell_life_cycle(
     }
 }
 
-pub fn cell_entities_update(
+pub fn follow_life_cycle_rules(
     mut commands: Commands,
     mut cycle_events: EventReader<BoardCycleEvent>,
     mut cell_entities: ResMut<CellEntityMap>,
-    color_handles: Res<ColorHandleMap>,
     cell_size: Res<CellSize>,
+    color_handles: Res<ColorHandleMap>,
     window: Res<WindowDescriptor>,
 ) {
     for evt in cycle_events.iter() {
@@ -111,6 +112,7 @@ pub fn cell_entities_update(
                     let y = (window.width / 2.0)
                         - (pos.0 as f32 * cell_size.width + cell_size.width / 2.0);
 
+                    // Cell entity
                     let cell_new = commands
                         .spawn_bundle(SpriteBundle {
                             material: color_handles.0.get("white").unwrap().clone(),

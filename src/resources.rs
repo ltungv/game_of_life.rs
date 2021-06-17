@@ -37,6 +37,20 @@ pub struct CellBoard {
     state: Vec<CellState>,
 }
 
+const DEFAULT_BOARD_STATE: ([CellState; 40 * 40], (usize, usize)) =
+    ([CellState::Dead; 40 * 40], (40, 40));
+
+impl Default for CellBoard {
+    fn default() -> Self {
+        let (state, (width, height)) = (Vec::from(DEFAULT_BOARD_STATE.0), DEFAULT_BOARD_STATE.1);
+        Self {
+            width,
+            height,
+            state,
+        }
+    }
+}
+
 impl CellBoard {
     pub fn new(width: usize, height: usize, state: Vec<CellState>) -> Self {
         Self {
