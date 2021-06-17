@@ -17,7 +17,7 @@ rows and columns in the cells grid are determined by the input state.
 Clone the project and build it with Cargo (see [the Rustbook's section on Cargo]).
 The CLI help message contains more information on how to use the program.
 
-```bash
+```plaintext
 game_of_life 0.1.0
 It's a game of life!
 
