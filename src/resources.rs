@@ -60,12 +60,6 @@ impl CellBoard {
         }
     }
 
-    pub fn cycle_apply(&mut self, delta: Vec<(CellPosition, CellState)>) {
-        for (CellPosition(row, col), state) in delta {
-            self.state[row * self.width + col] = state;
-        }
-    }
-
     pub fn cycle(&mut self) -> Vec<(CellPosition, CellState)> {
         let mut delta = vec![];
         for row in 0..self.height {
@@ -109,7 +103,7 @@ impl CellBoard {
         self.state[row * self.width + col] == CellState::Alive
     }
 
-    pub fn neighbours(&self, CellPosition(row, col): CellPosition) -> Vec<CellPosition> {
+    fn neighbours(&self, CellPosition(row, col): CellPosition) -> Vec<CellPosition> {
         assert!(col < self.width, "Non-existent column index");
         assert!(row < self.height, "Non-existent row index");
 
