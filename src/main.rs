@@ -61,19 +61,22 @@ struct CliOpt {
     )]
     window_height: f32,
 
+    /// Number of columns in the cell grid
     #[structopt(
-        name = "Number of rows",
+        name = "Grid columns",
+        short = "c",
+        long = "cols",
+        default_value = "30"
+    )]
+    cols: usize,
+
+    /// Number of rows in the cell grid
+    #[structopt(
+        name = "Grid rows",
         short = "r",
         long = "rows",
         default_value = "30"
     )]
     rows: usize,
 
-    #[structopt(
-        name = "Number of columns",
-        short = "c",
-        long = "cols",
-        default_value = "30"
-    )]
-    cols: usize,
 }
