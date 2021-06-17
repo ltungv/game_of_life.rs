@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use components::CellState;
+use components::{CellPosition, CellState};
 use resources::CellBoard;
 use std::{path::Path, time::Duration};
 
@@ -13,15 +13,29 @@ use self::{
 };
 
 pub struct LifePlugin {
-    pub init_state: Option<(Vec<CellState>, (usize, usize))>,
     pub cycle_interval: Duration,
+    pub init_state: Option<(Vec<CellState>, (usize, usize))>,
+    pub board_width: usize,
+    pub board_height: usize,
 }
 
 impl Plugin for LifePlugin {
     fn build(&self, app: &mut AppBuilder) {
         let board = match &self.init_state {
             None => CellBoard::default(),
-            Some((state, (width, height))) => CellBoard::new(*width, *height, state.clone()),
+            Some((state, (width, height))) => {
+                let mut board = CellBoard::new(
+                    self.board_width,
+                    self.board_height,
+                    vec![CellState::Dead; self.board_width * self.board_height],
+                );
+                let pos = CellPosition {
+                    col: (self.board_width - width) / 2,
+                    row: (self.board_height - height) / 2,
+                };
+                board.patch(pos, state, *width, *height);
+                board
+            }
         };
         app.add_event::<BoardCycleEvent>()
             .insert_resource(board)

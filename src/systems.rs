@@ -29,12 +29,12 @@ pub fn life_setup(
 
     for row in 0..board.height {
         for col in 0..board.width {
-            let pos = CellPosition(row, col);
+            let pos = CellPosition { col, row };
             if board.alive(pos) {
                 let x =
-                    (-window.height / 2.0) + (col as f32 * cell_size.width + cell_size.width / 2.0);
-                let y =
-                    (window.width / 2.0) - (row as f32 * cell_size.height + cell_size.height / 2.0);
+                    (-window.width / 2.0) + (col as f32 * cell_size.width + cell_size.width / 2.0);
+                let y = (window.height / 2.0)
+                    - (row as f32 * cell_size.height + cell_size.height / 2.0);
 
                 // Cell entity
                 let cell_new = commands
@@ -59,7 +59,7 @@ pub fn apply_life_cycle_rules(
 ) {
     if cycle_timer.0.tick(time.delta()).finished() {
         let delta: Vec<_> = (0..board.height)
-            .flat_map(|row| (0..board.width).map(move |col| CellPosition(row, col)))
+            .flat_map(|row| (0..board.width).map(move |col| CellPosition { col, row }))
             .filter_map(|pos| {
                 let n_alive_neighbours: usize = board
                     .neighbours(pos)
@@ -107,10 +107,10 @@ pub fn follow_life_cycle_rules(
             let cell_old = match state {
                 CellState::Dead => cell_entities.0.remove(pos),
                 CellState::Alive => {
-                    let x = (-window.height / 2.0)
-                        + (pos.1 as f32 * cell_size.height + cell_size.height / 2.0);
-                    let y = (window.width / 2.0)
-                        - (pos.0 as f32 * cell_size.width + cell_size.width / 2.0);
+                    let x = (-window.width / 2.0)
+                        + (pos.col as f32 * cell_size.width + cell_size.width / 2.0);
+                    let y = (window.height / 2.0)
+                        - (pos.row as f32 * cell_size.height + cell_size.height / 2.0);
 
                     // Cell entity
                     let cell_new = commands

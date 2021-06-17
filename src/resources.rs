@@ -62,43 +62,49 @@ impl CellBoard {
 
     pub fn patch(
         &mut self,
-        CellPosition(row, col): CellPosition,
+        pos: CellPosition,
         patch: &[CellState],
         patch_width: usize,
         patch_height: usize,
     ) {
-        assert!(col < self.width, "Non-existent column index");
-        assert!(row < self.height, "Non-existent row index");
+        assert!(pos.col < self.width, "Non-existent column index");
+        assert!(pos.row < self.height, "Non-existent row index");
 
-        assert!(col + patch_width <= self.width, "Patch exceeds board size");
         assert!(
-            row + patch_height <= self.height,
+            pos.col + patch_width <= self.width,
+            "Patch exceeds board size"
+        );
+        assert!(
+            pos.row + patch_height <= self.height,
             "Patch exceeds board size"
         );
 
         for row_patch in 0..patch_height {
             for col_patch in 0..patch_width {
-                let pos = CellPosition(row + row_patch, col + col_patch);
+                let pos = CellPosition {
+                    col: pos.col + col_patch,
+                    row: pos.row + row_patch,
+                };
                 self.set(pos, patch[row_patch * patch_width + col_patch]);
             }
         }
     }
 
-    pub fn set(&mut self, CellPosition(row, col): CellPosition, state: CellState) {
-        assert!(col < self.width, "Non-existent column index");
-        assert!(row < self.height, "Non-existent row index");
-        self.state[row * self.width + col] = state;
+    pub fn set(&mut self, pos: CellPosition, state: CellState) {
+        assert!(pos.col < self.width, "Non-existent column index");
+        assert!(pos.row < self.height, "Non-existent row index");
+        self.state[pos.row * self.width + pos.col] = state;
     }
 
-    pub fn alive(&self, CellPosition(row, col): CellPosition) -> bool {
-        assert!(col < self.width, "Non-existent column index");
-        assert!(row < self.height, "Non-existent row index");
-        self.state[row * self.width + col] == CellState::Alive
+    pub fn alive(&self, pos: CellPosition) -> bool {
+        assert!(pos.col < self.width, "Non-existent column index");
+        assert!(pos.row < self.height, "Non-existent row index");
+        self.state[pos.row * self.width + pos.col] == CellState::Alive
     }
 
-    pub fn neighbours(&self, CellPosition(row, col): CellPosition) -> Vec<CellPosition> {
-        assert!(col < self.width, "Non-existent column index");
-        assert!(row < self.height, "Non-existent row index");
+    pub fn neighbours(&self, pos: CellPosition) -> Vec<CellPosition> {
+        assert!(pos.col < self.width, "Non-existent column index");
+        assert!(pos.row < self.height, "Non-existent row index");
 
         let mut neighbours = Vec::new();
         for row_offset in -1..=1 {
@@ -107,7 +113,7 @@ impl CellBoard {
                     continue;
                 }
 
-                let row_neighbour = row as isize + row_offset;
+                let row_neighbour = pos.row as isize + row_offset;
                 let row_neighbour = if row_neighbour < 0 {
                     self.height - 1
                 } else if row_neighbour as usize >= self.height {
@@ -116,7 +122,7 @@ impl CellBoard {
                     row_neighbour as usize
                 };
 
-                let col_neighbour = col as isize + col_offset;
+                let col_neighbour = pos.col as isize + col_offset;
                 let col_neighbour = if col_neighbour < 0 {
                     self.width - 1
                 } else if col_neighbour as usize >= self.width {
@@ -125,7 +131,10 @@ impl CellBoard {
                     col_neighbour as usize
                 };
 
-                neighbours.push(CellPosition(row_neighbour, col_neighbour));
+                neighbours.push(CellPosition {
+                    col: col_neighbour,
+                    row: row_neighbour,
+                });
             }
         }
         neighbours
