@@ -10,4 +10,4 @@ rows and columns in the cells grid are determined by the input state.
 ["Conway's Game of Life"]: https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
 [Bevy game engine]: https://bevyengine.org
 
-![](demos/achim144.gif)
+![achim144](demos/achim144.gif)
