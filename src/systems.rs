@@ -55,7 +55,37 @@ pub fn cell_life_cycle(
     time: Res<Time>,
 ) {
     if cycle_timer.0.tick(time.delta()).finished() {
-        let delta = board.cycle();
+        let mut delta = vec![];
+        for row in 0..board.height {
+            for col in 0..board.width {
+                let pos = CellPosition(row, col);
+                let n_alive_neighbours: usize = board
+                    .neighbours(pos)
+                    .into_iter()
+                    .map(|p| if board.alive(p) { 1 } else { 0 })
+                    .sum();
+
+                // RULES (https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life#Rules)
+                // 1. Any live cell with two or three live neighbours survives.
+                // 2. Any dead cell with three live neighbours becomes a live cell.
+                // 3. All other live cells die in the next generation. Similarly, all other dead
+                // cells stay dead.
+
+                let is_alive = board.alive(pos);
+                let can_live = is_alive && (n_alive_neighbours == 2 || n_alive_neighbours == 3);
+                let can_revive = !is_alive && n_alive_neighbours == 3;
+
+                if (can_live || can_revive) && !is_alive {
+                    delta.push((pos, CellState::Alive));
+                }
+                if !(can_live || can_revive) && is_alive {
+                    delta.push((pos, CellState::Dead));
+                }
+            }
+        }
+        for &(pos, state) in &delta {
+            board.set(pos, state);
+        }
         cycle_events.send(BoardCycleEvent { delta });
     }
 }

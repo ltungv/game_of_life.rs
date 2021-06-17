@@ -49,61 +49,29 @@ impl CellBoard {
 
         for row_patch in 0..patch_height {
             for col_patch in 0..patch_width {
-                let row = row + row_patch;
-                let col = col + col_patch;
-                self.state[row * self.width + col] = if patch[row_patch * patch_width + col_patch] {
-                    CellState::Alive
+                let pos = CellPosition(row + row_patch, col + col_patch);
+                if patch[row_patch * patch_width + col_patch] {
+                    self.set(pos, CellState::Alive);
                 } else {
-                    CellState::Dead
-                };
+                    self.set(pos, CellState::Dead);
+                }
             }
         }
     }
 
-    pub fn cycle(&mut self) -> Vec<(CellPosition, CellState)> {
-        let mut delta = vec![];
-        for row in 0..self.height {
-            for col in 0..self.width {
-                let pos = CellPosition(row, col);
-                let n_alive_neighbours: usize = self
-                    .neighbours(pos)
-                    .into_iter()
-                    .map(|pos| if self.alive(pos) { 1 } else { 0 })
-                    .sum();
-                let can_live =
-                    self.alive(pos) && (n_alive_neighbours == 2 || n_alive_neighbours == 3);
-                let can_revive = !self.alive(pos) && n_alive_neighbours == 3;
-
-                // RULES (https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life#Rules)
-                // 1. Any live cell with two or three live neighbours survives.
-                // 2. Any dead cell with three live neighbours becomes a live cell.
-                // 3. All other live cells die in the next generation. Similarly, all other dead
-                // cells stay dead.
-                let new_cell_state = if can_live || can_revive {
-                    CellState::Alive
-                } else {
-                    CellState::Dead
-                };
-
-                if self.state[row * self.width + col] != new_cell_state {
-                    delta.push((pos, new_cell_state));
-                }
-            }
-        }
-        for &(CellPosition(row, col), state) in &delta {
-            self.state[row * self.width + col] = state;
-        }
-        delta
+    pub fn set(&mut self, CellPosition(row, col): CellPosition, state: CellState) {
+        assert!(col < self.width, "Non-existent column index");
+        assert!(row < self.height, "Non-existent row index");
+        self.state[row * self.width + col] = state;
     }
 
     pub fn alive(&self, CellPosition(row, col): CellPosition) -> bool {
         assert!(col < self.width, "Non-existent column index");
         assert!(row < self.height, "Non-existent row index");
-
         self.state[row * self.width + col] == CellState::Alive
     }
 
-    fn neighbours(&self, CellPosition(row, col): CellPosition) -> Vec<CellPosition> {
+    pub fn neighbours(&self, CellPosition(row, col): CellPosition) -> Vec<CellPosition> {
         assert!(col < self.width, "Non-existent column index");
         assert!(row < self.height, "Non-existent row index");
 
