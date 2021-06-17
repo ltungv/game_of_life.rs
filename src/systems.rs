@@ -35,14 +35,14 @@ pub fn life_setup(
                 let y = (WINDOW_SIZE.0 / 2.0) - (row as f32 * cell_size.1 + cell_size.1 / 2.0);
 
                 let cell_new = commands
-                        .spawn_bundle(SpriteBundle {
-                            material: color_handles.get("white").unwrap().clone(),
-                            sprite: Sprite::new(Vec2::new(cell_size.0, cell_size.1)),
-                            transform: Transform::from_xyz(x, y, 0.0),
-                            ..Default::default()
-                        })
-                        .id();
-                cell_entities.insert( pos,commands);
+                    .spawn_bundle(SpriteBundle {
+                        material: color_handles.get("white").unwrap().clone(),
+                        sprite: Sprite::new(Vec2::new(cell_size.0, cell_size.1)),
+                        transform: Transform::from_xyz(x, y, 0.0),
+                        ..Default::default()
+                    })
+                    .id();
+                cell_entities.insert(pos, cell_new);
             }
         }
     }
