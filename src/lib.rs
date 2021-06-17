@@ -10,8 +10,6 @@ use self::{
     systems::{cell_entities_update, cell_life_cycle, life_setup},
 };
 
-pub const WINDOW_SIZE: (f32, f32) = (600.0, 600.0);
-
 pub struct LifePlugin {
     pub init_board: CellBoard,
     pub cycle_interval: Duration,
@@ -21,13 +19,10 @@ impl Plugin for LifePlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_event::<BoardCycleEvent>()
             .insert_resource(self.init_board.clone())
-            .insert_resource(ColorHandleMap::new())
-            .insert_resource(CellEntityMap::new())
             .insert_resource(CycleTimer(Timer::new(self.cycle_interval, true)))
-            .insert_resource(CellSize(
-                WINDOW_SIZE.0 / self.init_board.width as f32,
-                WINDOW_SIZE.1 / self.init_board.height as f32,
-            ))
+            .init_resource::<ColorHandleMap>()
+            .init_resource::<CellEntityMap>()
+            .init_resource::<CellSize>()
             .add_startup_system(life_setup.system())
             .add_system(cell_life_cycle.system())
             .add_system(cell_entities_update.system());

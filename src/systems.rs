@@ -1,7 +1,6 @@
 use crate::{
     components::{CellPosition, CellState},
     resources::{BoardCycleEvent, CellBoard, CellEntityMap, CellSize, ColorHandleMap, CycleTimer},
-    WINDOW_SIZE,
 };
 use bevy::prelude::*;
 
@@ -12,8 +11,9 @@ pub fn life_setup(
     mut color_handles: ResMut<ColorHandleMap>,
     board: Res<CellBoard>,
     cell_size: Res<CellSize>,
+    window: Res<WindowDescriptor>,
 ) {
-    color_handles.insert(
+    color_handles.0.insert(
         "white".to_string(),
         materials.add(Color::rgb_u8(255, 255, 255).into()),
     );
@@ -23,7 +23,7 @@ pub fn life_setup(
     // Background
     commands.spawn_bundle(SpriteBundle {
         material: materials.add(Color::rgb_u8(0, 0, 0).into()),
-        sprite: Sprite::new(Vec2::new(WINDOW_SIZE.0, WINDOW_SIZE.1)),
+        sprite: Sprite::new(Vec2::new(window.width, window.height)),
         ..Default::default()
     });
 
@@ -31,18 +31,20 @@ pub fn life_setup(
         for col in 0..board.width {
             let pos = CellPosition(row, col);
             if board.alive(pos) {
-                let x = (-WINDOW_SIZE.1 / 2.0) + (col as f32 * cell_size.0 + cell_size.0 / 2.0);
-                let y = (WINDOW_SIZE.0 / 2.0) - (row as f32 * cell_size.1 + cell_size.1 / 2.0);
+                let x =
+                    (-window.height / 2.0) + (col as f32 * cell_size.width + cell_size.width / 2.0);
+                let y =
+                    (window.width / 2.0) - (row as f32 * cell_size.height + cell_size.height / 2.0);
 
                 let cell_new = commands
                     .spawn_bundle(SpriteBundle {
-                        material: color_handles.get("white").unwrap().clone(),
-                        sprite: Sprite::new(Vec2::new(cell_size.0, cell_size.1)),
+                        material: color_handles.0.get("white").unwrap().clone(),
+                        sprite: Sprite::new(Vec2::new(cell_size.width, cell_size.height)),
                         transform: Transform::from_xyz(x, y, 0.0),
                         ..Default::default()
                     })
                     .id();
-                cell_entities.insert(pos, cell_new);
+                cell_entities.0.insert(pos, cell_new);
             }
         }
     }
@@ -55,10 +57,9 @@ pub fn cell_life_cycle(
     time: Res<Time>,
 ) {
     if cycle_timer.0.tick(time.delta()).finished() {
-        let mut delta = vec![];
-        for row in 0..board.height {
-            for col in 0..board.width {
-                let pos = CellPosition(row, col);
+        let delta: Vec<_> = (0..board.height)
+            .flat_map(|row| (0..board.width).map(move |col| CellPosition(row, col)))
+            .filter_map(|pos| {
                 let n_alive_neighbours: usize = board
                     .neighbours(pos)
                     .into_iter()
@@ -76,16 +77,18 @@ pub fn cell_life_cycle(
                 let can_revive = !is_alive && n_alive_neighbours == 3;
 
                 if (can_live || can_revive) && !is_alive {
-                    delta.push((pos, CellState::Alive));
+                    return Some((pos, CellState::Alive));
                 }
                 if !(can_live || can_revive) && is_alive {
-                    delta.push((pos, CellState::Dead));
+                    return Some((pos, CellState::Dead));
                 }
-            }
-        }
-        for &(pos, state) in &delta {
+                None
+            })
+            .collect();
+
+        delta.iter().for_each(|&(pos, state)| {
             board.set(pos, state);
-        }
+        });
         cycle_events.send(BoardCycleEvent { delta });
     }
 }
@@ -96,25 +99,27 @@ pub fn cell_entities_update(
     mut cell_entities: ResMut<CellEntityMap>,
     color_handles: Res<ColorHandleMap>,
     cell_size: Res<CellSize>,
+    window: Res<WindowDescriptor>,
 ) {
     for evt in cycle_events.iter() {
         for (pos, state) in &evt.delta {
             let cell_old = match state {
-                CellState::Dead => cell_entities.remove(pos),
+                CellState::Dead => cell_entities.0.remove(pos),
                 CellState::Alive => {
-                    let x =
-                        (-WINDOW_SIZE.1 / 2.0) + (pos.1 as f32 * cell_size.1 + cell_size.1 / 2.0);
-                    let y =
-                        (WINDOW_SIZE.0 / 2.0) - (pos.0 as f32 * cell_size.0 + cell_size.0 / 2.0);
+                    let x = (-window.height / 2.0)
+                        + (pos.1 as f32 * cell_size.height + cell_size.height / 2.0);
+                    let y = (window.width / 2.0)
+                        - (pos.0 as f32 * cell_size.width + cell_size.width / 2.0);
+
                     let cell_new = commands
                         .spawn_bundle(SpriteBundle {
-                            material: color_handles.get("white").unwrap().clone(),
-                            sprite: Sprite::new(Vec2::new(cell_size.0, cell_size.1)),
+                            material: color_handles.0.get("white").unwrap().clone(),
+                            sprite: Sprite::new(Vec2::new(cell_size.width, cell_size.height)),
                             transform: Transform::from_xyz(x, y, 0.0),
                             ..Default::default()
                         })
                         .id();
-                    cell_entities.insert(*pos, cell_new)
+                    cell_entities.0.insert(*pos, cell_new)
                 }
             };
 

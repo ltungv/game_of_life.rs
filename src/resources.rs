@@ -2,17 +2,33 @@ use crate::components::{CellPosition, CellState};
 use bevy::prelude::*;
 use std::collections::HashMap;
 
-pub type CellEntityMap = HashMap<CellPosition, Entity>;
+#[derive(Default)]
+pub struct CellEntityMap(pub HashMap<CellPosition, Entity>);
 
-pub type ColorHandleMap = HashMap<String, Handle<ColorMaterial>>;
+#[derive(Default)]
+pub struct ColorHandleMap(pub HashMap<String, Handle<ColorMaterial>>);
+
+pub struct CycleTimer(pub Timer);
 
 pub struct BoardCycleEvent {
     pub delta: Vec<(CellPosition, CellState)>,
 }
 
-pub struct CycleTimer(pub Timer);
+pub struct CellSize {
+    pub width: f32,
+    pub height: f32,
+}
 
-pub struct CellSize(pub f32, pub f32);
+impl FromWorld for CellSize {
+    fn from_world(world: &mut World) -> Self {
+        let window = world.get_resource::<WindowDescriptor>().unwrap();
+        let board = world.get_resource::<CellBoard>().unwrap();
+        Self {
+            width: window.width / board.width as f32,
+            height: window.height / board.height as f32,
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct CellBoard {
@@ -22,8 +38,7 @@ pub struct CellBoard {
 }
 
 impl CellBoard {
-    pub fn new(width: usize, height: usize) -> Self {
-        let state = vec![CellState::Dead; width * height];
+    pub fn new(width: usize, height: usize, state: Vec<CellState>) -> Self {
         Self {
             width,
             height,
@@ -34,7 +49,7 @@ impl CellBoard {
     pub fn patch(
         &mut self,
         CellPosition(row, col): CellPosition,
-        patch: &[bool],
+        patch: &[CellState],
         patch_width: usize,
         patch_height: usize,
     ) {
@@ -50,11 +65,7 @@ impl CellBoard {
         for row_patch in 0..patch_height {
             for col_patch in 0..patch_width {
                 let pos = CellPosition(row + row_patch, col + col_patch);
-                if patch[row_patch * patch_width + col_patch] {
-                    self.set(pos, CellState::Alive);
-                } else {
-                    self.set(pos, CellState::Dead);
-                }
+                self.set(pos, patch[row_patch * patch_width + col_patch]);
             }
         }
     }
